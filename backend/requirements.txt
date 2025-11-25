@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+pydantic
+# Database Dependencies
+sqlalchemy
+psycopg2-binary # PostgreSQL adapter
