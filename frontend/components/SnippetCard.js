@@ -51,7 +51,7 @@ export default function SnippetCard({ snippet }) {
     setFeedback(null);
     setLoading(true);
 
-    // ... (Your existing check answer logic using submitData for POST)
+    
     try {
       const result = await submitData(`${API_URL}/api/submit-answer`, "POST", {
         id: snippet.id,
@@ -113,7 +113,7 @@ export default function SnippetCard({ snippet }) {
           <div className="space-x-2">
             <button
               onClick={() => {
-                setIsEditing(true); // 👈 Modal ကို ဖွင့်ပါ
+                setIsEditing(true); //  Modal ကို ဖွင့်ပါ
                 setFeedback(null);
               }}
               className="text-sm px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"

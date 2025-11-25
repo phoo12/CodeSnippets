@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 
-# ကျွန်တော်တို့ ဖန်တီးထားတဲ့ file တွေကနေ import လုပ်ခြင်း
+# ဖန်တီးထားတဲ့ file တွေကနေ import လုပ်ခြင်း
 from . import models, schemas, crud
 from .database import engine, Base, get_db
 from .initial_data import create_initial_snippets

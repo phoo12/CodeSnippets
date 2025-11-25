@@ -47,7 +47,7 @@ def update_snippet(db: Session, snippet_id: int, snippet_data: schemas.CodeSnipp
         return db_snippet
     return None
 
-#  (Optional) DELETE: Snippet တစ်ခုကို ဖျက်ခြင်း (Delete Function ကိုလည်း ထည့်သွင်းလိုပါက)
+#  DELETE: Snippet တစ်ခုကို ဖျက်ခြင်း (Delete Function ကိုလည်း ထည့်သွင်းလိုပါက)
 def delete_snippet(db: Session, snippet_id: int) -> bool:
     """
     Given an ID, deletes the corresponding snippet from the database.

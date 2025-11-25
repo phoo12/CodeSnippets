@@ -1,6 +1,10 @@
 // Server Component ကို သုံးပြီး API မှ data ကို Server Side တွင် fetch ပါမည်။
-import SnippetCard from "../components/SnippetCard"; // 👈 SnippetCard ကို import လုပ်ပါ
-import CreateSnippetForm from "@/components/CreateSnippetForm";
+import SnippetCard from "../components/SnippetCard"; 
+import Link from 'next/link';
+
+export const metadata = {
+  title: "Code Snippets",
+};
 
 // Environment Variable မှ API URL ကို ယူပါ (Docker တွင် backend:8000 သို့ ညွှန်ပြပါသည်)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -37,15 +41,17 @@ export default async function PracticePage() {
       <h1 className="text-3xl font-bold mb-6 border-b-2 pb-2">
         Full-Stack Code Practice
       </h1>
-      <CreateSnippetForm />
+      <Link href="/create" className="text-sm px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+            + Create New Snippet
+        </Link>
 
       {snippets.length === 0 ? (
         <p className="text-red-500">
-          လေ့ကျင့်ခန်း ဒေတာများ မရှိသေးပါ။ Database/API ကို စစ်ဆေးပါ။
+          There is no data..Please check Database/API!!
         </p>
       ) : (
         snippets.map((snippet) => (
-          //  ဤနေရာကို ပြင်ဆင်ခြင်း: Button ပါသော Div ကို ဖယ်ပြီး SnippetCard ကို သုံးပါ
+          
           <SnippetCard key={snippet.id} snippet={snippet} />
         ))
       )}
@@ -53,4 +59,4 @@ export default async function PracticePage() {
   );
 }
 
-// ⚠️ အရေးကြီး: SnippetCard.js ရဲ့ ကုဒ်ကို page.js အောက်မှာ လုံးဝ မထားပါနဲ့။
+

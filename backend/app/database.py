@@ -16,7 +16,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Base class: SQLAlchemy Models များအတွက် အခြေခံ
 Base = declarative_base()
-# ...existing code...
+
 def get_db():
     db = SessionLocal()
     try:
