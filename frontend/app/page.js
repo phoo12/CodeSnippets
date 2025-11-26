@@ -1,6 +1,7 @@
 // Server Component ကို သုံးပြီး API မှ data ကို Server Side တွင် fetch ပါမည်။
-import SnippetCard from "../components/SnippetCard"; 
-import Link from 'next/link';
+import SnippetCard from "../components/SnippetCard";
+import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
 export const metadata = {
   title: "Code Snippets",
@@ -37,26 +38,29 @@ export default async function PracticePage() {
   const snippets = await fetchSnippets();
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6 border-b-2 pb-2">
-        Full-Stack Code Practice
-      </h1>
-      <Link href="/create" className="text-sm px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-            + Create New Snippet
+    <>
+      <Navbar />
+      <div className="container mx-auto p-4">
+        <h1 className="text-3xl font-bold mb-6 border-b-2 pb-2">
+          Full-Stack Code Practice
+        </h1>
+        <Link
+          href="/create"
+          className="text-sm px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          + Create New Snippet
         </Link>
 
-      {snippets.length === 0 ? (
-        <p className="text-red-500">
-          There is no data..Please check Database/API!!
-        </p>
-      ) : (
-        snippets.map((snippet) => (
-          
-          <SnippetCard key={snippet.id} snippet={snippet} />
-        ))
-      )}
-    </div>
+        {snippets.length === 0 ? (
+          <p className="text-red-500">
+            There is no data..Please check Database/API!!
+          </p>
+        ) : (
+          snippets.map((snippet) => (
+            <SnippetCard key={snippet.id} snippet={snippet} />
+          ))
+        )}
+      </div>
+    </>
   );
 }
-
-
