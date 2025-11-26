@@ -2,42 +2,41 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import EditModal from "./EditModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function SnippetCard({ snippet }) {
-  // 1. STATE MANAGEMENT
   const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false); // 👈 Edit Mode ကို စီမံသည်
-  const [userAnswer, setUserAnswer] = useState("");
+  const { isAuthenticated } = useAuth();
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Helper function for submission (PUT or POST)
-  const submitData = async (url, method, body) => {
-    setLoading(true);
-    setFeedback(null);
-    try {
-      const response = await fetch(url, {
-        method: method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+  // Helper function for authenticated requests
+  const authenticatedFetch = async (url, options = {}) => {
+    const token = localStorage.getItem("token");
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "API error");
-      }
-      return data;
-    } catch (err) {
-      console.error(err);
-      throw new Error("Server error or invalid input.");
-    } finally {
-      setLoading(false);
+    if (
+      !token &&
+      (options.method === "PUT" ||
+        options.method === "DELETE" ||
+        options.method === "POST")
+    ) {
+      throw new Error("Please login to perform this action");
     }
+
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      },
+      credentials: "include",
+    });
   };
 
   //  Update ပြီးနောက် List ကို Refresh လုပ်ရန် Function
@@ -51,29 +50,41 @@ export default function SnippetCard({ snippet }) {
     setFeedback(null);
     setLoading(true);
 
-    // ... (Your existing check answer logic using submitData for POST)
     try {
-      const result = await submitData(`${API_URL}/api/submit-answer`, "POST", {
-        id: snippet.id,
-        answer: userAnswer.trim(),
+      const response = await fetch(`${API_URL}/api/submit-answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: snippet.id,
+          answer: userAnswer.trim(),
+        }),
       });
-      // Fix: Check the status field in the json response
-      if (result.status == "success"){
 
+      const result = await response.json();
+
+      if (result.status === "success") {
         setFeedback({ status: "success", message: result.message });
-      }
-      else{
-        // If the HTTP status was 200, but the JSON status is 'error'
+      } else {
         setFeedback({ status: "error", message: result.message });
       }
     } catch (error) {
       setFeedback({ status: "error", message: error.message });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   //  Snippet ကို ဖျက်ခြင်း Function (DELETE)
   const handleDeleteSnippet = async () => {
+    // Check authentication first
+    if (!isAuthenticated) {
+      setFeedback({
+        status: "error",
+        message: "Please login to delete snippets",
+      });
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to delete this snippet?")) {
       return;
     }
@@ -82,24 +93,41 @@ export default function SnippetCard({ snippet }) {
     setLoading(true);
 
     try {
-      const url = `${API_URL}/api/snippets/${snippet.id}`;
+      const response = await authenticatedFetch(
+        `${API_URL}/api/snippets/${snippet.id}`,
+        { method: "DELETE" }
+      );
 
-      // DELETE Method ကို သုံးပြီး API ကို ခေါ်ဆိုခြင်း (204 No Content ကို မျှော်လင့်သည်)
-      await fetch(url, { method: "DELETE" });
-
-      setFeedback({
-        status: "success",
-        message: "Snippet deleted successfully! Updating list...",
-      });
-      handleUpdateComplete(); // ချက်ချင်း Update လုပ်ပါ
+      if (response.ok) {
+        setFeedback({
+          status: "success",
+          message: "Snippet deleted successfully! Updating list...",
+        });
+        handleUpdateComplete();
+      } else {
+        const error = await response.json();
+        throw new Error(error.detail || "Failed to delete");
+      }
     } catch (error) {
-      setFeedback({ status: "error", message: "Failed to delete snippet." });
+      setFeedback({ status: "error", message: error.message });
     } finally {
       setLoading(false);
     }
   };
 
-  // 3. RENDER LOGIC
+  // Handle Edit Click with Auth Check
+  const handleEditClick = () => {
+    if (!isAuthenticated) {
+      setFeedback({
+        status: "error",
+        message: "Please login to edit snippets",
+      });
+      return;
+    }
+    setIsEditing(true);
+    setFeedback(null);
+  };
+
   return (
     <>
       <div className="bg-white shadow-lg rounded-lg p-5 mb-6 border border-gray-200">
@@ -109,35 +137,36 @@ export default function SnippetCard({ snippet }) {
             #{snippet.id} - {snippet.language}
           </h2>
 
-          {/* EDIT & DELETE BUTTONS */}
-          <div className="space-x-2">
-            <button
-              onClick={() => {
-                setIsEditing(true); // 👈 Modal ကို ဖွင့်ပါ
-                setFeedback(null);
-              }}
-              className="text-sm px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
-            >
-              Edit
-            </button>
-            <button
-              onClick={handleDeleteSnippet}
-              disabled={loading}
-              className="text-sm  px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition disabled:bg-gray-400"
-            >
-              {loading ? "Deleting..." : "Delete"}
-            </button>
-          </div>
+          {/* EDIT & DELETE BUTTONS - Only show if authenticated */}
+          {isAuthenticated && (
+            <div className="space-x-2">
+              <button
+                onClick={handleEditClick}
+                className="text-sm px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDeleteSnippet}
+                disabled={loading}
+                className="text-sm px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition disabled:bg-gray-400"
+              >
+                {loading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* ANSWER CHECK FORM */}
+        {/* CODE SNIPPET */}
         <pre className="bg-gray-800 text-white p-4 rounded-md overflow-x-auto text-sm">
           <code>{snippet.snippet}</code>
         </pre>
+
         <p className="mt-4 font-medium text-gray-800">
           **Question:** {snippet.question}
         </p>
 
+        {/* ANSWER CHECK FORM */}
         <form
           onSubmit={handleCheckAnswer}
           className="mt-4 flex flex-col space-y-3"
@@ -153,7 +182,7 @@ export default function SnippetCard({ snippet }) {
           <button
             type="submit"
             disabled={loading}
-            className="bg-green-500 text-white py-2 rounded"
+            className="bg-green-500 text-white py-2 rounded hover:bg-green-600 transition disabled:bg-gray-400"
           >
             {loading ? "Checking..." : "Check Answer"}
           </button>
@@ -173,12 +202,12 @@ export default function SnippetCard({ snippet }) {
         )}
       </div>
 
-      {/* 5. MODAL RENDERING */}
+      {/* MODAL RENDERING */}
       {isEditing && (
         <EditModal
           snippet={snippet}
-          onClose={() => setIsEditing(false)} // Modal ပိတ်ရန်
-          onUpdate={handleUpdateComplete} // Update ပြီးနောက် Refresh လုပ်ရန်
+          onClose={() => setIsEditing(false)}
+          onUpdate={handleUpdateComplete}
         />
       )}
     </>

@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import EditModal from "./EditModal"; // EditModal ကို Form ထဲတွင် မသုံးသော်လည်း import လုပ်ထားသည်။
+import { useAuth } from "@/context/AuthContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function CreateSnippetForm() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   // 1. Form Data State ကို ပြန်လည်ထည့်သွင်းခြင်း
   const [formData, setFormData] = useState({
@@ -36,10 +37,26 @@ export default function CreateSnippetForm() {
     setLoading(true);
     setFeedback(null);
 
+    if (!isAuthenticated) {
+      setFeedback({
+        status: "error",
+        message: "Please login to create snippets",
+      });
+      return;
+    }
+
+    setLoading(true);
+    setFeedback(null);
+
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_URL}/api/snippets`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
 
@@ -76,6 +93,16 @@ export default function CreateSnippetForm() {
       setLoading(false);
     }
   };
+  // Don't render form if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="p-6 bg-yellow-50 border border-yellow-300 rounded-lg mb-8">
+        <p className="text-yellow-700 font-semibold">
+          Please login to create new snippets
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-white shadow-xl rounded-lg mb-8">
