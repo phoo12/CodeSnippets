@@ -12,7 +12,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Check if user is logged in on mount
   useEffect(() => {
     checkAuth();
   }, []);
@@ -34,17 +33,8 @@ export function AuthProvider({ children }) {
 
       if (response.ok) {
         const userData = await response.json();
-        // console.log("Auth check success - userData:", userData);
-        if (userData && userData.username) {
-          setUser(userData);
-        } else {
-          // Even if the response is OK, if the data is unusable, treat as error.
-          console.error("Auth check failed: User data missing username.");
-          localStorage.removeItem("token");
-          setUser(null);
-        }
+        setUser(userData);
       } else {
-        // Token invalid, clear it
         localStorage.removeItem("token");
         setUser(null);
       }
@@ -53,7 +43,6 @@ export function AuthProvider({ children }) {
       localStorage.removeItem("token");
       setUser(null);
     } finally {
-      // END: This ensures loading is false regardless of success/failure
       setLoading(false);
     }
   };
@@ -63,7 +52,7 @@ export function AuthProvider({ children }) {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // Important for cookies
+        credentials: "include",
         body: JSON.stringify({ username, password }),
       });
 
@@ -73,15 +62,15 @@ export function AuthProvider({ children }) {
       }
 
       const data = await response.json();
+      console.log("Login response:", data); // Keep this to debug
 
       // Store JWT token
       localStorage.setItem("token", data.access_token);
 
-      // After login, set user immediately
-      setUser({ username: data.username });
-
-      // Fetch full user data to ensure complete state (fixes the refresh issue)
-      await checkAuth();
+      // FIX: Set user from data.user (not data.username)
+      if (data.user) {
+        setUser(data.user);
+      }
 
       return { success: true };
     } catch (error) {
@@ -123,7 +112,6 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Clear local state regardless of API call success
       localStorage.removeItem("token");
       setUser(null);
       router.push("/login");

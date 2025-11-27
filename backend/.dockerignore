@@ -1,0 +1,18 @@
+# Source Control
+.git
+.gitignore
+
+# Compiled Python files (These are created during runtime and should not be baked into the image)
+__pycache__
+*.pyc
+
+# Virtual Environment folder (usually created locally)
+venv/
+.venv/
+
+# Local database file (Since you mount it as a volume, don't copy it into the image)
+dev.db
+
+# Any temporary files or logs
+*.log
+.DS_Store

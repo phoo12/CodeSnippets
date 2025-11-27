@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
+import cl from "@/public/cl.png";
 
 export default function Navbar() {
   const { user, logout, isAuthenticated, loading } = useAuth();
@@ -10,9 +12,20 @@ export default function Navbar() {
     return (
       <nav className="bg-blue-600 text-white p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold">
-            Code Practice
-          </Link>
+          {/* NEW WRAPPER DIV for logo and title */}
+          <div className="flex items-center space-x-1">
+            <Image
+              src={cl}
+              alt="Logo"
+              width={40}
+              height={40}
+              className="rounded-full"
+            />
+            <Link href="/" className="text-2xl font-bold">
+              Code Practice
+            </Link>
+          </div>
+          {/* End of NEW WRAPPER DIV */}
           <div className="text-sm">Loading...</div>
         </div>
       </nav>
@@ -22,22 +35,28 @@ export default function Navbar() {
   return (
     <nav className="bg-blue-600 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
-        <Link
-          href="/"
-          className="text-2xl font-bold hover:text-blue-200 transition"
-        >
-          Code Practice
-        </Link>
+        {/* NEW WRAPPER DIV for logo and title */}
+        <div className="flex items-center space-x-1">
+          <Image
+            src={cl}
+            alt="Logo"
+            width={40}
+            height={40}
+            className="rounded-full"
+          />
+          <Link
+            href="/"
+            className="text-2xl font-bold hover:text-blue-200 transition"
+          >
+            Code Practice
+          </Link>
+        </div>
 
         <div className="flex items-center space-x-4">
-          {isAuthenticated && user && user.username ? (
+          {isAuthenticated ? (
             <>
               <span className="text-sm">
-                {/* {console.log("Navbar user object:", user)} */}
-                Welcome,{" "}
-                <span className="font-semibold">
-                  {user?.username || "User"}
-                </span>
+                Welcome, <span className="font-semibold">{user?.username}</span>
                 !
               </span>
               <button

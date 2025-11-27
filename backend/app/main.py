@@ -73,7 +73,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     hashed_password = get_password_hash(user.password)
     return crud.create_user(db, user=user, hashed_password=hashed_password)
 
-@app.post("/api/auth/login")
+@app.post("/api/auth/login", response_model=schemas.LoginResponse)
 def login_user(
     response: Response,
     user_login: schemas.UserLogin, 
@@ -81,7 +81,6 @@ def login_user(
 ):
     """User Login လုပ်ခြင်း (Hybrid: JWT + Session)"""
     
-    # User ရှာဖွေခြင်း
     db_user = crud.get_user_by_username(db, username=user_login.username)
     
     if not db_user or not verify_password(user_login.password, db_user.hashed_password):
@@ -106,16 +105,25 @@ def login_user(
         key="session_token",
         value=session_token,
         httponly=True,
-        max_age=60 * 60 * 24,  # 24 hours
+        max_age=60 * 60 * 24,
         samesite="lax"
     )
     
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "session_token": session_token,
-        "user": db_user
-    }
+    # FIX: Convert SQLAlchemy model to Pydantic schema
+    user_response = schemas.User(
+        id=db_user.id,
+        username=db_user.username,
+        email=db_user.email,
+        full_name=db_user.full_name,
+        created_at=db_user.created_at
+    )
+    
+    return schemas.LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        session_token=session_token,
+        user=user_response
+    )
 
 @app.post("/api/auth/logout")
 def logout_user(
