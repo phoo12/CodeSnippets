@@ -10,7 +10,7 @@ export default function CreateSnippetForm() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
-  // 1. Form Data State ကို ပြန်လည်ထည့်သွင်းခြင်း
+  // 1. Form Data State
   const [formData, setFormData] = useState({
     language: "",
     snippet: "",
@@ -18,20 +18,18 @@ export default function CreateSnippetForm() {
     correct_answer: "",
   });
 
-  // 2. Loading State ကို ပြန်လည်ထည့်သွင်းခြင်း
+  // 2. Loading State
   const [loading, setLoading] = useState(false);
 
   const [feedback, setFeedback] = useState(null);
 
-  // Note: isEditing, userAnswer, handleUpdateComplete များကို Create Form တွင် မလိုအပ်သောကြောင့် ဖယ်ထားသည်။
-
-  // 3. Input Change Handler ကို ပြန်လည်ထည့်သွင်းခြင်း
+  // 3. Input Change Handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 4. Form Submit Handler ကို ပြန်လည်ထည့်သွင်းခြင်း
+  // 4. Form Submit Handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -42,11 +40,10 @@ export default function CreateSnippetForm() {
         status: "error",
         message: "Please login to create snippets",
       });
+      // Login မလုပ်ထားရင် loading ကို ပြန်ပိတ်ပါ
+      setLoading(false); 
       return;
     }
-
-    setLoading(true);
-    setFeedback(null);
 
     try {
       const token = localStorage.getItem("token");
@@ -93,6 +90,7 @@ export default function CreateSnippetForm() {
       setLoading(false);
     }
   };
+  
   // Don't render form if not authenticated
   if (!isAuthenticated) {
     return (

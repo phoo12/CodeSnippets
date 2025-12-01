@@ -7,76 +7,37 @@ import EditModal from "./EditModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-export default function SnippetCard({ snippet }) {
+//  onCorrectAnswer ကို ဖြုတ်ပြီး onAnswerChange ကို လက်ခံပါ 
+export default function SnippetCard({ snippet, onAnswerChange }) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [userAnswer, setUserAnswer] = useState("");
+  
+  //  Component အတွင်းမှာ userAnswer state ကို ထားစရာ မလိုတော့ပါ 
+  // Parent Component ကနေ value ကို ပို့ပေးရင်သာ ထားပါ
+  // ဒီနေရာမှာတော့ Local state ကိုပဲ ပြန်သုံးပါမယ် (Parent ကို Change event ပို့ပေးဖို့)
+  const [userAnswer, setUserAnswer] = useState(""); 
+  
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Helper function for authenticated requests
-  const authenticatedFetch = async (url, options = {}) => {
-    const token = localStorage.getItem("token");
+  const handleUpdateComplete = () => router.refresh();
 
-    if (
-      !token &&
-      (options.method === "PUT" ||
-        options.method === "DELETE" ||
-        options.method === "POST")
-    ) {
-      throw new Error("Please login to perform this action");
-    }
+  //  handleCheckAnswer function ကို လုံးဝ ဖြုတ်ပါ 
+  //  စုပေါင်း Submit လုပ်ရန်အတွက် 
 
-    return fetch(url, {
-      ...options,
-      headers: {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
-      },
-      credentials: "include",
-    });
-  };
-
-  //  Update ပြီးနောက် List ကို Refresh လုပ်ရန် Function
-  const handleUpdateComplete = () => {
-    router.refresh();
-  };
-
-  //  အဖြေစစ်ဆေးခြင်း Function (POST)
-  const handleCheckAnswer = async (e) => {
-    e.preventDefault();
-    setFeedback(null);
-    setLoading(true);
-
-    try {
-      const response = await fetch(`${API_URL}/api/submit-answer`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: snippet.id,
-          answer: userAnswer.trim(),
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.status === "success") {
-        setFeedback({ status: "success", message: result.message });
-      } else {
-        setFeedback({ status: "error", message: result.message });
-      }
-    } catch (error) {
-      setFeedback({ status: "error", message: error.message });
-    } finally {
-      setLoading(false);
+  const handleAnswerInputChange = (e) => {
+    const answer = e.target.value;
+    setUserAnswer(answer);
+    //  အဖြေပြောင်းတိုင်း Parent Component ကို Update လုပ်ပါ 
+    if (onAnswerChange) {
+      onAnswerChange(snippet.id, answer);
     }
   };
 
-  //  Snippet ကို ဖျက်ခြင်း Function (DELETE)
+
   const handleDeleteSnippet = async () => {
-    // Check authentication first
     if (!isAuthenticated) {
       setFeedback({
         status: "error",
@@ -85,28 +46,31 @@ export default function SnippetCard({ snippet }) {
       return;
     }
 
-    if (!window.confirm("Are you sure you want to delete this snippet?")) {
+    if (!window.confirm("Are you sure you want to delete this snippet?"))
       return;
-    }
 
     setFeedback(null);
     setLoading(true);
 
     try {
-      const response = await authenticatedFetch(
-        `${API_URL}/api/snippets/${snippet.id}`,
-        { method: "DELETE" }
-      );
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/snippets/${snippet.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      });
 
       if (response.ok) {
         setFeedback({
           status: "success",
-          message: "Snippet deleted successfully! Updating list...",
+          message: "Snippet deleted successfully!",
         });
         handleUpdateComplete();
       } else {
         const error = await response.json();
-        throw new Error(error.detail || "Failed to delete");
+        throw new Error(error.detail || "Failed to delete snippet");
       }
     } catch (error) {
       setFeedback({ status: "error", message: error.message });
@@ -115,7 +79,6 @@ export default function SnippetCard({ snippet }) {
     }
   };
 
-  // Handle Edit Click with Auth Check
   const handleEditClick = () => {
     if (!isAuthenticated) {
       setFeedback({
@@ -131,13 +94,10 @@ export default function SnippetCard({ snippet }) {
   return (
     <>
       <div className="bg-white shadow-lg rounded-lg p-5 mb-6 border border-gray-200">
-        {/* HEADER & CONTROLS */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-700">
             #{snippet.id} - {snippet.language}
           </h2>
-
-          {/* EDIT & DELETE BUTTONS - Only show if authenticated */}
           {isAuthenticated && (
             <div className="space-x-2">
               <button
@@ -157,7 +117,6 @@ export default function SnippetCard({ snippet }) {
           )}
         </div>
 
-        {/* CODE SNIPPET */}
         <pre className="bg-gray-800 text-white p-4 rounded-md overflow-x-auto text-sm">
           <code>{snippet.snippet}</code>
         </pre>
@@ -166,29 +125,19 @@ export default function SnippetCard({ snippet }) {
           **Question:** {snippet.question}
         </p>
 
-        {/* ANSWER CHECK FORM */}
-        <form
-          onSubmit={handleCheckAnswer}
-          className="mt-4 flex flex-col space-y-3"
-        >
+        {/*  Form ကို ဖြုတ်ပြီး Input ကိုသာ ထားရှိပါမည်  */}
+        <div className="mt-4 flex flex-col space-y-3">
           <input
             type="text"
             value={userAnswer}
-            onChange={(e) => setUserAnswer(e.target.value)}
+            onChange={handleAnswerInputChange}
             placeholder="Enter your answer"
             required
             className="border border-gray-300 p-2 rounded-md focus:border-blue-500"
           />
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-green-500 text-white py-2 rounded hover:bg-green-600 transition disabled:bg-gray-400"
-          >
-            {loading ? "Checking..." : "Check Answer"}
-          </button>
-        </form>
+          {/*  Check Answer Button ကို ဖြုတ်ပါ  */}
+        </div>
 
-        {/* FEEDBACK DISPLAY */}
         {feedback && (
           <div
             className={`mt-4 p-3 rounded-md font-semibold ${
@@ -202,7 +151,6 @@ export default function SnippetCard({ snippet }) {
         )}
       </div>
 
-      {/* MODAL RENDERING */}
       {isEditing && (
         <EditModal
           snippet={snippet}

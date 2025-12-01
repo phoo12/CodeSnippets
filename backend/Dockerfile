@@ -4,6 +4,9 @@ FROM python:3.10-slim
 # Working Directory ကို သတ်မှတ်ခြင်း
 WORKDIR /code
 
+# Create data directory for SQLite database
+RUN mkdir -p /code/data && chmod 777 /code/data
+
 # Requirements file ကို container ထဲသို့ ကူးယူပါ
 COPY ./requirements.txt /code/requirements.txt
 

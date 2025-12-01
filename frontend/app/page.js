@@ -1,24 +1,24 @@
 // Server Component ကို သုံးပြီး API မှ data ကို Server Side တွင် fetch ပါမည်။
-import SnippetCard from "../components/SnippetCard";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
+import TestSection from "../components/TestSection"; 
+
 export const metadata = {
-  title: "Code Snippets",
+  title: "Code Practice Test",
 };
 
-// Environment Variable မှ API URL ကို ယူပါ (Docker တွင် backend:8000 သို့ ညွှန်ပြပါသည်)
+// Environment Variable မှ API URL ကို ယူပါ
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 async function fetchSnippets() {
   try {
-    //  Next.js Server Component တွင် fetch() သည် automatically cache လုပ်သည်
+    // Development/Testing အတွက် caching ကို ပိတ်ထားခြင်း (လိုအပ်ပါက)
     const response = await fetch(`${API_URL}/api/snippets`, {
-      cache: "no-store", // Development အတွက် caching ကို ပိတ်ထားခြင်း
+      cache: "no-store", 
     });
 
     if (!response.ok) {
-      // Error message ကို ပိုမိုရှင်းလင်းအောင် ဖန်တီးပါ
       const errorDetail = await response.text();
       throw new Error(
         `HTTP error! status: ${response.status} - ${errorDetail}`
@@ -29,7 +29,6 @@ async function fetchSnippets() {
     return data;
   } catch (e) {
     console.error("API Fetching Error: ", e.message);
-    // Error ဖြစ်ရင် Empty Array ပြန်ပေးခြင်း
     return [];
   }
 }
@@ -37,28 +36,31 @@ async function fetchSnippets() {
 export default async function PracticePage() {
   const snippets = await fetchSnippets();
 
+  // TestSection အတွက် ယာယီ Section Name
+  const sectionName = "Code Snippet Fundamentals"; 
+
   return (
     <>
       <Navbar />
       <div className="container mx-auto p-4">
         <h1 className="text-3xl font-bold mb-6 border-b-2 pb-2">
-          Full-Stack Code Practice
+          {sectionName} Test
         </h1>
         <Link
           href="/create"
-          className="text-sm px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          className="text-sm px-4 py-2 mb-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition inline-block"
         >
-          + Create New Snippet
+          + Create New Snippet (Admin)
         </Link>
+        <hr className="my-4"/>
 
         {snippets.length === 0 ? (
-          <p className="text-red-500">
-            There is no data..Please check Database/API!!
+          <p className="text-red-500 font-semibold">
+            There is no data. Please check Database/API or add new snippets.
           </p>
         ) : (
-          snippets.map((snippet) => (
-            <SnippetCard key={snippet.id} snippet={snippet} />
-          ))
+          //  Snippet တစ်ခုချင်းစီကို တိုက်ရိုက် မခေါ်တော့ဘဲ TestSection အသစ်ကို ပို့ပေးပါမည် 
+          <TestSection snippets={snippets} sectionName={sectionName} />
         )}
       </div>
     </>

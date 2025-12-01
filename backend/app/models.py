@@ -26,6 +26,7 @@ class DbUser(Base):
     
     # Relationship
     sessions = relationship("DbSession", back_populates="user", cascade="all, delete-orphan")
+    scores = relationship("DbUserScore", back_populates="user", cascade="all, delete-orphan")
 
 #  Session Model (For Session-based Authentication)
 class DbSession(Base):
@@ -39,3 +40,18 @@ class DbSession(Base):
     
     # Relationship
     user = relationship("DbUser", back_populates="sessions")
+
+#  User Score Model
+class DbUserScore(Base):
+    __tablename__ = "user_scores"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    section_name = Column(String, index=True, nullable=False)
+    total_score = Column(Integer, default=0)
+    total_possible = Column(Integer, nullable=False)
+    submitted_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = relationship("DbUser", back_populates="scores")
+    

@@ -11,7 +11,7 @@ from .database import get_db
 from . import models
 
 # Security Configuration
-SECRET_KEY = "your-secret-key-change-this-in-production"  # ပြောင်းလဲပါ!
+SECRET_KEY = "your-secret-key-change-this-in-production"  # change!
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 SESSION_EXPIRE_MINUTES = 60 * 24  # 24 hours

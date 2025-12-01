@@ -12,8 +12,7 @@ export default function Navbar() {
     return (
       <nav className="bg-blue-600 text-white p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
-          {/* NEW WRAPPER DIV for logo and title */}
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-3">
             <Image
               src={cl}
               alt="Logo"
@@ -25,7 +24,6 @@ export default function Navbar() {
               Code Practice
             </Link>
           </div>
-          {/* End of NEW WRAPPER DIV */}
           <div className="text-sm">Loading...</div>
         </div>
       </nav>
@@ -35,8 +33,8 @@ export default function Navbar() {
   return (
     <nav className="bg-blue-600 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
-        {/* NEW WRAPPER DIV for logo and title */}
-        <div className="flex items-center space-x-1">
+        {/* Left side: Logo and Title */}
+        <div className="flex items-center space-x-3">
           <Image
             src={cl}
             alt="Logo"
@@ -52,13 +50,25 @@ export default function Navbar() {
           </Link>
         </div>
 
+        {/* Right side: Navigation Links */}
         <div className="flex items-center space-x-4">
           {isAuthenticated ? (
             <>
+              {/* View Scores Button
+              <Link
+                href="/scores"
+                className="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded transition font-semibold"
+              >
+                📊 View Scores
+              </Link> */}
+
+              {/* Welcome Message */}
               <span className="text-sm">
                 Welcome, <span className="font-semibold">{user?.username}</span>
                 !
               </span>
+
+              {/* Logout Button */}
               <button
                 onClick={logout}
                 className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded transition font-semibold"

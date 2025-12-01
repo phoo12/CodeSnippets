@@ -1,12 +1,15 @@
+// EditModal.jsx
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 // API URL ကို global environment variable မှ ယူပါ
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // Props: snippet (မူရင်းဒေတာ), onClose (ပိတ်ရန် function), onUpdate (update ပြီးနောက် refresh လုပ်ရန် function)
 export default function EditModal({ snippet, onClose, onUpdate }) {
+  const { isAuthenticated } = useAuth();
   const [editData, setEditData] = useState({
     language: snippet.language,
     snippet: snippet.snippet,
@@ -22,11 +25,21 @@ export default function EditModal({ snippet, onClose, onUpdate }) {
     setEditData((prev) => ({ ...prev, [name]: value }));
   };
 
-  //  Snippet ကို ပြင်ဆင်ခြင်း Function (PUT)
+  //  Snippet ကို ပြင်ဆင်ခြင်း Function (PUT) - ADDING AUTHENTICATION
   const handleUpdateSnippet = async (e) => {
     e.preventDefault();
     setLoading(true);
     setFeedback(null);
+
+    // 1. Client-side Auth Check
+    if (!isAuthenticated) {
+      setFeedback({
+        status: "error",
+        message: "Login is required to edit snippets.",
+      });
+      setLoading(false);
+      return;
+    }
 
     if (!editData.correct_answer) {
       setFeedback({
@@ -39,10 +52,16 @@ export default function EditModal({ snippet, onClose, onUpdate }) {
 
     try {
       const url = `${API_URL}/api/snippets/${snippet.id}`;
+      // Retrieve token from local storage
+      const token = localStorage.getItem("token"); // <-- AUTH STEP 1
 
       const response = await fetch(url, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // <-- AUTH STEP 2: Include the JWT token
+        },
+        credentials: "include", // Ensure cookies (session token) are also sent
         body: JSON.stringify(editData),
       });
 
@@ -59,6 +78,12 @@ export default function EditModal({ snippet, onClose, onUpdate }) {
 
         // Modal ကို ခဏပိတ်ဖို့ အချိန်ပေးပါ
         setTimeout(onClose, 1000);
+      } else if (response.status === 401) {
+        // Handle specific Unauthorized error
+        setFeedback({
+          status: "error",
+          message: "Unauthorized. Please log in again.",
+        });
       } else {
         setFeedback({
           status: "error",

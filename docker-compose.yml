@@ -1,5 +1,3 @@
-# version: "3.8"
-
 services:
   backend:
     build: ./backend
@@ -7,10 +5,11 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/code
-      - ./backend/dev.db:/code/dev.db # persist sqlite file on host
+      - sqlite-data:/code/data  # Persistent volume for database
     environment:
-      - DATABASE_URL=sqlite:///./dev.db # backend will use SQLite
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+      - DATABASE_URL=sqlite:///./data/dev.db  # Store in data directory
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
 
   frontend:
     build: ./frontend
@@ -20,3 +19,7 @@ services:
       - backend
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:8000
+    restart: unless-stopped
+
+volumes:
+  sqlite-data:  # Named volume for database persistence

@@ -62,12 +62,12 @@ export function AuthProvider({ children }) {
       }
 
       const data = await response.json();
-      console.log("Login response:", data); // Keep this to debug
+      console.log("Login response:", data);
 
       // Store JWT token
       localStorage.setItem("token", data.access_token);
 
-      // FIX: Set user from data.user (not data.username)
+      // Set user from data.user
       if (data.user) {
         setUser(data.user);
       }
@@ -118,6 +118,8 @@ export function AuthProvider({ children }) {
     }
   };
 
+  
+
   const value = {
     user,
     loading,
@@ -125,6 +127,7 @@ export function AuthProvider({ children }) {
     register,
     logout,
     isAuthenticated: !!user,
+  
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
